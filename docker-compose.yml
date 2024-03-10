@@ -1,0 +1,50 @@
+version: "3.9"
+services:
+  webserver:
+    build: ./docker/php/
+    container_name: php81-apache-magento246p4
+    ports:
+      - "80:80"
+      # - "443:443"
+    volumes:
+      - ./:/var/www/html/
+    depends_on:
+      - mysql-db
+    networks:
+      default:
+        ipv4_address: 10.1.0.3
+    # command: >
+    #   sh -c "cd /var/www/html &&
+    #          find var generated vendor pub/static pub/media app/etc -type f -exec chmod g+w {} + &&
+    #          find var generated vendor pub/static pub/media app/etc -type d -exec chmod g+ws {} +"
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql80-magento246p4
+    volumes:
+      - ./docker/mysql/magento.sql:/docker-entrypoint-initdb.d/magento.sql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: magento
+    ports:
+      - "33063:3306"
+    networks:
+      default:
+        ipv4_address: 10.1.0.2
+  es717:
+    image: elasticsearch:7.17.17
+    container_name: es717-magento246p4
+    environment:
+      - xpack.security.transport.ssl.enabled=false
+      - discovery.type=single-node
+    ports:
+      - "9203:9200"
+    networks:
+      default:
+        ipv4_address: 10.1.0.4
+networks:
+  default:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 10.1.0.0/16
+         gateway: 10.1.0.1
